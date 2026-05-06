@@ -295,6 +295,7 @@ void compute(){
 	);
 	// computeAccels<<<gridSize, blockSize>>>(dPos, dMass, dAccels);
     computeAccels_shared<<<gridSize, blockSize>>>(dPos, dMass, dAccels);
+    cudaDeviceSynchronize();
     
 
 
@@ -328,7 +329,7 @@ void compute(){
 	// updateBodies<<<gridSize2, blockSize2>>>(dPos, dVel, dAccels);
 	//                                       ↑更新先  ↑読み取り
     updateBodies_reduction<<<NUMENTITIES, 256>>>(dPos, dVel, dAccels);
-
+    cudaDeviceSynchronize();
 
 
 	//sum up the rows of our matrix to get effect on each entity, then update velocity and position.
