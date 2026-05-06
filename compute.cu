@@ -37,13 +37,13 @@ __global__ void computeAccels_shared(
 
     // ── 共有メモリへの読み込み ────────────────────────
     if (threadIdx.y == 0 && i < NUMENTITIES)
-        shPos_i[threadIdx.x] = dPos[i];
+        for(int k=0;k<3;k++) shPos_i[threadIdx.x][k] = dPos[i][k];
     // y方向先頭スレッドだけ書き込む
     // 例: ブロック内の(0,0)(1,0)(2,0)...が担当
     //     → shPos_i[0]=dPos[i0], shPos_i[1]=dPos[i1]...
 
     if (threadIdx.x == 0 && j < NUMENTITIES) {
-        shPos_j[threadIdx.y]  = dPos[j];
+        for(int k=0;k<3;k++) shPos_j[threadIdx.y][k] = dPos[j][k];
         shMass_j[threadIdx.y] = dMass[j];
     }
     // x方向先頭スレッドだけ書き込む
@@ -167,9 +167,9 @@ __global__ void updateBodies_reduction(
 
     // ── 部分和の計算 ──────────────────────────────────
     vector3 local;
-    vector3[0] = 0;
-    vector3[1] = 0;
-    vector3[2] = 0;
+    local[0] = 0;
+    local[1] = 0;
+    local[2] = 0;
     // このスレッドが担当するj成分の部分和
     // NUMENTITIESが256より大きいとき
     // 1スレッドが複数のjを担当する
@@ -180,7 +180,7 @@ __global__ void updateBodies_reduction(
             local[k] += dAccels[i*NUMENTITIES + j][k];
     }
 
-    shAccel[tid] = local;
+    for(int k=0;k<3;k++) shAccel[tid][k] = local[k];
     // 部分和を共有メモリに書き込む
 
     __syncthreads();
