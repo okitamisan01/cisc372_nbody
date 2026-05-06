@@ -166,7 +166,10 @@ __global__ void updateBodies_reduction(
     if (i >= NUMENTITIES) return;
 
     // ── 部分和の計算 ──────────────────────────────────
-    vector3 local = {0, 0, 0};
+    vector3 local;
+    vector3[0] = 0;
+    vector3[1] = 0;
+    vector3[2] = 0;
     // このスレッドが担当するj成分の部分和
     // NUMENTITIESが256より大きいとき
     // 1スレッドが複数のjを担当する
@@ -290,7 +293,9 @@ void compute(){
 		(NUMENTITIES + 15) / 16,
 		(NUMENTITIES + 15) / 16
 	);
-	computeAccels<<<gridSize, blockSize>>>(dPos, dMass, dAccels);
+	// computeAccels<<<gridSize, blockSize>>>(dPos, dMass, dAccels);
+    computeAccels_shared<<<gridSize, blockSize>>>(dPos, dMass, dAccels);
+    
 
 
 	// for (i=0;i<NUMENTITIES;i++)
@@ -312,16 +317,18 @@ void compute(){
 	// 	}
 	// }
 
-	dim3 blockSize2(256);
+	// dim3 blockSize2(256);
 	// 1次元: 1ブロック256スレッド
 
-	dim3 gridSize2((NUMENTITIES + 255) / 256);
+	// dim3 gridSize2((NUMENTITIES + 255) / 256);
 	// 必要なブロック数（切り上げ）
 	// 例: NUMENTITIES=10  → 1ブロック
 	//     NUMENTITIES=300 → 2ブロック
 
-	updateBodies<<<gridSize2, blockSize2>>>(dPos, dVel, dAccels);
+	// updateBodies<<<gridSize2, blockSize2>>>(dPos, dVel, dAccels);
 	//                                       ↑更新先  ↑読み取り
+    updateBodies_reduction<<<NUMENTITIES, 256>>>(dPos, dVel, dAccels);
+
 
 
 	//sum up the rows of our matrix to get effect on each entity, then update velocity and position.
